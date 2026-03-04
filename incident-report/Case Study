@@ -1,6 +1,8 @@
-Execution Scope Drift in an AI Agent IDE Leading to Full Drive Deletion (Case Study)
+##**See evidence/ for supporting screenshots.**
 
-Abstract
+##Execution Scope Drift in an AI Agent IDE Leading to Full Drive Deletion (Case Study)
+
+**Abstract**
 
 This report documents a reproducible destructive filesystem incident observed while testing an AI-powered development environment.
 
@@ -12,7 +14,7 @@ The issue was acknowledged by vendor support as a systemic path-parsing failure.
 
 This report reconstructs the execution chain, documents reproduction attempts, and discusses implications for AI agent execution safety.
 
-1. Background
+###**1. Background**
 
 Recent AI development tools allow agents to execute terminal commands directly from natural language instructions.
 
@@ -32,7 +34,7 @@ Operating system
 
 If semantic alignment fails between these layers, destructive commands may execute outside the intended scope.
 
-2. Incident Overview
+###**2. Incident Overview**
 
 During testing of an AI-enabled IDE environment, the user requested the AI agent to remove a node_modules folder from a project directory.
 
@@ -52,7 +54,7 @@ After confirmation, the deletion process began.
 
 However, instead of removing only the specified folder, the operation recursively deleted the entire E drive.
 
-3. Vendor Confirmation
+###**3. Vendor Confirmation**
 
 Vendor support later confirmed the following in written correspondence:
 
@@ -66,7 +68,7 @@ Support also indicated that the vendor was working on:
 
 hard-coded guardrails and path validation.
 
-4. Execution Environment
+###**4. Execution Environment**
 
 The observed execution chain was:
 
@@ -86,7 +88,7 @@ cmd /c "rmdir /s /q \"E:\AI_Test_Root\My Project2\Task_Folder\node_modules\""
 
 This structure introduces multiple quoting layers.
 
-5. Observed Behavior
+###**5. Observed Behavior**
 
 During execution, the first directory visibly deleted was:
 
@@ -105,7 +107,7 @@ Meaning recursive deletion without confirmation.
 
 As a result, all directories on the drive were removed.
 
-6. Reproducibility
+###**6. Reproducibility**
 
 The behavior was reproduced multiple times using newly created directories.
 
@@ -122,7 +124,8 @@ The behavior appeared only when directory paths contained:
 
 spaces
 or special characters such as &
-7. Failure Hypothesis
+
+###**7. Failure Hypothesis**
 
 The most likely cause is a multi-layer quoting failure.
 
@@ -145,7 +148,7 @@ If the argument becomes truncated or invalid, the shell may fall back to the cur
 
 Combined with /s /q, this leads to recursive deletion of the drive.
 
-8. Safety Implications for AI Agents
+###**8. Safety Implications for AI Agents**
 
 This case illustrates a structural risk in AI agent execution environments.
 
@@ -161,7 +164,7 @@ Where the command displayed to the user differs from the scope of the command ac
 
 When destructive commands are involved, such drift can result in irreversible data loss.
 
-9. Suggested Safeguards
+###**9. Suggested Safeguards**
 
 Potential mitigation approaches include:
 
@@ -175,7 +178,7 @@ Ensuring displayed commands exactly match executed commands
 
 Guardrails for commands containing recursive deletion flags
 
-10. Notes on Reproduction Environment
+###**10. Notes on Reproduction Environment**
 
 The incident and reproductions occurred on Antigravity IDE builds active between:
 
@@ -183,7 +186,7 @@ Late January 2026 – mid February 2026
 
 Exact version numbers were not recorded.
 
-11. Evidence
+###**11. Evidence**
 
 Available evidence includes:
 
