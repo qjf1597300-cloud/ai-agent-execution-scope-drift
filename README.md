@@ -1,89 +1,131 @@
-This repository documents a reproducible destructive command execution issue observed in an AI agent IDE environment.
-
 # Execution Scope Drift in an AI Agent IDE
 
-This repository documents a reproducible destructive filesystem incident observed while testing an AI-powered development environment.
+⚠️ Destructive command execution case study
 
-A natural-language instruction asking the AI agent to remove a specific folder resulted in recursive deletion of an entire drive.
+This repository documents a reproducible filesystem deletion incident observed while testing an AI-powered development environment.
 
-The command displayed to the user targeted a specific directory, but the execution scope expanded to the root of the drive.
+A natural-language instruction asking an AI agent to remove a specific folder resulted in recursive deletion of the entire drive.
 
-Vendor support later confirmed that the issue was caused by a **systemic path-parsing failure**.
+The command displayed to the user targeted a specific directory, but the effective execution scope expanded to the root of the drive.
 
----
-
-## Incident Summary
-
-User intent:
-
-Remove a `node_modules` folder under a project directory.
-
-Example command shown to the user:
-
-```
-rmdir /s /q "E:\...\node_modules"
-```
-
-After confirmation, deletion began and the drive contents were removed recursively.
+Vendor support later confirmed the cause as a **systemic path-parsing failure**.
 
 ---
 
-## Key Observation
+# Example Command
 
-Deletion began from:
+The AI agent generated a command similar to:
 
-```
+
+rmdir /s /q "E:...\node_modules"
+
+
+After confirmation, deletion began and the entire drive contents were removed recursively.
+
+---
+
+# Key Observation
+
+Deletion started from:
+
+
 $RECYCLE.BIN
-```
 
-This indicates that the command effectively executed on:
 
-```
+Since this directory exists only at the root of a Windows drive, this strongly indicates that the effective deletion target became:
+
+
 E:\
-```
 
-instead of the intended directory.
+
+instead of the intended project directory.
 
 ---
 
-## Reproducibility
+# Execution Chain
+
+The observed execution path was:
+
+
+User instruction
+↓
+AI agent reasoning
+↓
+Command generation
+↓
+IDE execution wrapper
+↓
+PowerShell compatibility layer
+↓
+cmd /c
+↓
+rmdir
+↓
+Filesystem deletion
+
+
+This multi-layer execution environment introduces multiple quoting and argument parsing stages.
+
+---
+
+# Reproducibility
 
 The behavior was reproduced multiple times using newly created directories.
 
-The issue appeared to trigger when directory paths contained:
+The issue appears to trigger when directory paths contain:
 
-- spaces
+- spaces  
 - special characters such as `&`
 
-Multiple recordings of the reproduction process were captured.
+Multiple reproduction recordings were captured.
 
 ---
 
-## Vendor Response
+# Vendor Response
 
-Vendor support confirmed the following:
+Vendor support confirmed the following in written correspondence:
 
 > A technical review confirms that a systemic path-parsing failure caused the agent to execute a recursive `rmdir` command on the root directory.
 
-The vendor also stated that similar failures had been observed previously and that guardrails and path validation were being implemented.
+The response also stated that this failure mode had been observed previously and that guardrails and path validation were being implemented.
 
 ---
 
-## Repository Structure
+# Full Technical Report
 
-```
-incident-report/     Detailed case study and technical analysis
-evidence/            Screenshots and vendor correspondence
-reproduction/        Reproduction notes and recordings
-timeline/            Timeline of incident and investigation
-```
+A detailed reconstruction of the incident, reproduction attempts, and technical analysis is available here:
+
+➡️ `incident-report/execution-scope-drift-case-study.md`
 
 ---
 
-## Purpose
+# Purpose
 
 This repository documents a potential safety issue in **AI agent execution environments**, where the command displayed to the user may differ from the scope of the command actually executed.
 
 This phenomenon is referred to as:
 
 **Execution Scope Drift**
+
+---
+
+# Repository Structure
+
+
+incident-report/ Detailed technical case study
+evidence/ Screenshots and vendor correspondence
+reproduction/ Reproduction notes
+timeline/ Incident timeline
+
+
+---
+
+# Notes
+
+The incident and reproductions occurred on Antigravity IDE builds active between:
+
+
+Late January 2026 – mid February 2026
+
+
+Exact version numbers were not recorded.
