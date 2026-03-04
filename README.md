@@ -1,3 +1,5 @@
+This repository documents a reproducible destructive command execution issue observed in an AI agent IDE environment.
+
 # Execution Scope Drift in an AI Agent IDE
 
 This repository documents a reproducible destructive filesystem incident observed while testing an AI-powered development environment.
