@@ -1,0 +1,200 @@
+Execution Scope Drift in an AI Agent IDE Leading to Full Drive Deletion (Case Study)
+
+Abstract
+
+This report documents a reproducible destructive filesystem incident observed while testing an AI-powered development environment.
+
+A natural-language instruction asking the AI agent to remove a specific node_modules directory resulted in the recursive deletion of the entire drive. The command displayed to the user targeted a specific folder, but the actual execution scope expanded to the root of the drive.
+
+Evidence suggests that a multi-layer command construction and shell parsing failure occurred in the agent execution environment when paths contained spaces or special characters.
+
+The issue was acknowledged by vendor support as a systemic path-parsing failure.
+
+This report reconstructs the execution chain, documents reproduction attempts, and discusses implications for AI agent execution safety.
+
+1. Background
+
+Recent AI development tools allow agents to execute terminal commands directly from natural language instructions.
+
+A typical execution chain looks like:
+
+User instruction
+↓
+AI reasoning
+↓
+Command generation
+↓
+IDE execution wrapper
+↓
+Shell interpreter
+↓
+Operating system
+
+If semantic alignment fails between these layers, destructive commands may execute outside the intended scope.
+
+2. Incident Overview
+
+During testing of an AI-enabled IDE environment, the user requested the AI agent to remove a node_modules folder from a project directory.
+
+The instruction given to the agent was conceptually equivalent to:
+
+Clean the node_modules folder under:
+E:\AI Test Root\My Project\Task Folder
+using a cmd command.
+
+The agent generated the following command:
+
+rmdir /s /q "E:\AI_Test_Root\My Project2\Task_Folder\node_modules"
+
+The IDE displayed the command and asked for confirmation.
+
+After confirmation, the deletion process began.
+
+However, instead of removing only the specified folder, the operation recursively deleted the entire E drive.
+
+3. Vendor Confirmation
+
+Vendor support later confirmed the following in written correspondence:
+
+Our technical review confirms that a systemic path-parsing failure caused the agent to execute a recursive rmdir command on your root directory.
+
+The support response further stated:
+
+We have unfortunately seen the finality of this specific failure before.
+
+Support also indicated that the vendor was working on:
+
+hard-coded guardrails and path validation.
+
+4. Execution Environment
+
+The observed execution chain was:
+
+Agent
+↓
+IDE execution wrapper
+↓
+PowerShell compatibility layer
+↓
+cmd /c
+↓
+rmdir
+
+The command was wrapped as:
+
+cmd /c "rmdir /s /q \"E:\AI_Test_Root\My Project2\Task_Folder\node_modules\""
+
+This structure introduces multiple quoting layers.
+
+5. Observed Behavior
+
+During execution, the first directory visibly deleted was:
+
+$RECYCLE.BIN
+
+Since $RECYCLE.BIN exists only at the root of a Windows drive, this strongly suggests that the effective deletion target became:
+
+E:\
+
+The command parameters included:
+
+/s
+/q
+
+Meaning recursive deletion without confirmation.
+
+As a result, all directories on the drive were removed.
+
+6. Reproducibility
+
+The behavior was reproduced multiple times using newly created directories.
+
+Test cases included:
+
+Test	Directory Structure	Result
+Test A	path with spaces	full drive deletion
+Test B	path with spaces	full drive deletion
+Test C	path with spaces	full drive deletion
+
+All reproductions were recorded.
+
+The behavior appeared only when directory paths contained:
+
+spaces
+or special characters such as &
+7. Failure Hypothesis
+
+The most likely cause is a multi-layer quoting failure.
+
+Because the command passes through several environments:
+
+Agent command generation
+IDE execution wrapper
+PowerShell quoting
+cmd.exe quoting
+
+Paths containing spaces or special characters may be incorrectly escaped.
+
+Example:
+
+"E:\AI Test Root\My Project"
+
+may be parsed incorrectly during one of the quoting stages.
+
+If the argument becomes truncated or invalid, the shell may fall back to the current drive context.
+
+Combined with /s /q, this leads to recursive deletion of the drive.
+
+8. Safety Implications for AI Agents
+
+This case illustrates a structural risk in AI agent execution environments.
+
+Traditional command-line tools assume that users understand the commands being executed.
+
+Agentic systems introduce an additional semantic translation layer.
+
+This creates a new failure class:
+
+Execution Scope Drift
+
+Where the command displayed to the user differs from the scope of the command actually executed.
+
+When destructive commands are involved, such drift can result in irreversible data loss.
+
+9. Suggested Safeguards
+
+Potential mitigation approaches include:
+
+Path normalization before command execution
+
+Execution sandboxing for destructive commands
+
+Explicit confirmation for root-level operations
+
+Ensuring displayed commands exactly match executed commands
+
+Guardrails for commands containing recursive deletion flags
+
+10. Notes on Reproduction Environment
+
+The incident and reproductions occurred on Antigravity IDE builds active between:
+
+Late January 2026 – mid February 2026
+
+Exact version numbers were not recorded.
+
+11. Evidence
+
+Available evidence includes:
+
+IDE execution screenshots
+
+terminal command records
+
+AI-generated analysis
+
+multiple reproduction recordings
+
+vendor support correspondence confirming systemic failure
+
+Selected evidence may be published separately.
