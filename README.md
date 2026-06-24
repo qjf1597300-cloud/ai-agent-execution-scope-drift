@@ -1,4 +1,4 @@
-# Execution Scope Drift in an AI Agent IDE
+# Execution Scope Drift in an AI Agent IDE：
 
 ⚠️ Destructive command execution case study
 
